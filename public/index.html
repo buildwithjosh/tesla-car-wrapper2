@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesla Custom Wrap Creator - Multi AI</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #141414;
+            --accent-red: #e82127;
+            --accent-blue: #3e6ae1;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #222222;
+            --success: #4ade80;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(232, 33, 39, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(232, 33, 39, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            animation: gridShift 20s linear infinite;
+        }
+
+        @keyframes gridShift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-red), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            to { left: 100%; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.4s; }
+        .card:nth-child(4) { animation-delay: 0.6s; }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* AI Provider Selection */
+        .provider-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .provider-option {
+            flex: 1;
+            min-width: 200px;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .provider-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(232, 33, 39, 0.2);
+        }
+
+        .provider-option.selected {
+            border-color: var(--accent-red);
+            background: rgba(232, 33, 39, 0.1);
+        }
+
+        .provider-option.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--accent-red);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .provider-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .provider-info {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .provider-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        .badge-free {
+            background: var(--success);
+            color: var(--bg-dark);
+        }
+
+        .badge-trial {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .badge-key {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        /* API Key Input */
+        .api-key-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        .api-key-help {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .api-key-help a {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+
+        .api-key-help a:hover {
+            text-decoration: underline;
+        }
+
+        /* Model Grid */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .model-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .model-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-blue));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .model-option:hover {
+            border-color: var(--accent-red);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(232, 33, 39, 0.2);
+        }
+
+        .model-option:hover::before {
+            opacity: 0.1;
+        }
+
+        .model-option.selected {
+            border-color: var(--accent-red);
+            background: rgba(232, 33, 39, 0.1);
+        }
+
+        .model-option.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--accent-red);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .model-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .model-info {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Tab System */
+        .input-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            font-family: 'Orbitron', sans-serif;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent-red);
+            border-bottom-color: var(--accent-red);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* AI Prompt Section */
+        .ai-prompt-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .ai-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.95rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .ai-textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: rgba(62, 106, 225, 0.05);
+        }
+
+        .ai-textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .char-counter.warning {
+            color: #fbbf24;
+        }
+
+        .prompt-suggestions {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(62, 106, 225, 0.05);
+            border: 1px solid rgba(62, 106, 225, 0.2);
+            border-radius: 8px;
+        }
+
+        .prompt-suggestions h4 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .suggestion-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .suggestion-tag {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-tag:hover {
+            background: rgba(62, 106, 225, 0.1);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-red);
+            background: rgba(232, 33, 39, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--accent-blue);
+            background: rgba(62, 106, 225, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.6;
+        }
+
+        .upload-text {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Preview Section */
+        .preview-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .preview-box {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 4px;
+            object-fit: contain;
+            background: repeating-conic-gradient(#1a1a1a 0% 25%, #0f0f0f 0% 50%) 50% / 20px 20px;
+        }
+
+        .canvas-container {
+            display: none;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            outline: none;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--accent-blue);
+            transform: scale(1.2);
+        }
+
+        /* Buttons */
+        .button {
+            font-family: 'Orbitron', sans-serif;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .button-primary {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #c01d22;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(232, 33, 39, 0.4);
+        }
+
+        .button-secondary {
+            background: transparent;
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .button-secondary:hover {
+            background: var(--accent-blue);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .button-ai {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-blue));
+            color: white;
+            font-size: 1rem;
+            padding: 1rem 2.5rem;
+        }
+
+        .button-ai:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(232, 33, 39, 0.4);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .status-success {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: var(--success);
+        }
+
+        .status-info {
+            background: rgba(62, 106, 225, 0.1);
+            border: 1px solid rgba(62, 106, 225, 0.3);
+            color: #93bbff;
+        }
+
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .file-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .file-info-label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .file-info-value {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .file-size-warning {
+            color: #fbbf24;
+        }
+
+        .file-size-error {
+            color: #f87171;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--accent-red);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-text {
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .loading-subtext {
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .preview-container {
+                flex-direction: column;
+            }
+
+            .model-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .input-tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                text-align: left;
+            }
+
+            .provider-selector {
+                flex-direction: column;
+            }
+        }
+
+        /* Instructions */
+        .instructions {
+            background: rgba(62, 106, 225, 0.05);
+            border: 1px solid rgba(62, 106, 225, 0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .instructions h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .instructions ol {
+            margin-left: 1.5rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .instructions li {
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-blue));
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // AI Provider configurations
+        const AI_PROVIDERS = {
+            pollinations: {
+                name: 'Pollinations.ai',
+                info: 'Works in browser! No setup',
+                badge: 'free',
+                requiresApiKey: false,
+                quality: 'Good',
+                speed: 'Fast',
+                browserOnly: true // Works in standalone HTML
+            },
+            huggingface: {
+                name: 'Hugging Face',
+                info: 'Requires backend/hosting',
+                badge: 'free',
+                requiresApiKey: true,
+                quality: 'Excellent',
+                speed: 'Medium',
+                apiKeyLink: 'https://huggingface.co/settings/tokens',
+                browserOnly: false // Indicates needs backend
+            },
+            replicate: {
+                name: 'Replicate',
+                info: '$5 free credit',
+                badge: 'trial',
+                requiresApiKey: true,
+                quality: 'Excellent',
+                speed: 'Fast',
+                apiKeyLink: 'https://replicate.com/account/api-tokens'
+            },
+            openai: {
+                name: 'OpenAI DALL-E',
+                info: 'Paid API key',
+                badge: 'key',
+                requiresApiKey: true,
+                quality: 'Excellent',
+                speed: 'Fast',
+                apiKeyLink: 'https://platform.openai.com/api-keys'
+            }
+        };
+
+        // Tesla model configurations
+        const TESLA_MODELS = {
+            'model3': {
+                name: 'Model 3',
+                info: 'Legacy (2017-2023)',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/model3/template.png'
+            },
+            'model3-2024-base': {
+                name: 'Model 3 2024+',
+                info: 'Base & Premium',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/model3-2024-base/template.png'
+            },
+            'model3-2024-perf': {
+                name: 'Model 3 2024+',
+                info: 'Performance',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/model3-2024-performance/template.png'
+            },
+            'modely': {
+                name: 'Model Y',
+                info: 'Legacy (2020-2024)',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely/template.png'
+            },
+            'modely-2025-base': {
+                name: 'Model Y 2025+',
+                info: 'Base',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-2025-base/template.png'
+            },
+            'modely-2025-premium': {
+                name: 'Model Y 2025+',
+                info: 'Premium',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-2025-premium/template.png'
+            },
+            'modely-2025-perf': {
+                name: 'Model Y 2025+',
+                info: 'Performance',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-2025-performance/template.png'
+            },
+            'modely-l': {
+                name: 'Model Y Long',
+                info: '7-Seater',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/modely-l/template.png'
+            },
+            'cybertruck': {
+                name: 'Cybertruck',
+                info: 'All Variants',
+                dimensions: { width: 1024, height: 1024 },
+                templateUrl: 'https://raw.githubusercontent.com/teslamotors/custom-wraps/master/cybertruck/template.png'
+            }
+        };
+
+        const PROMPT_SUGGESTIONS = [
+            "Lightning McQueen from Cars",
+            "Iron Man suit colors and arc reactor",
+            "Batman dark knight theme",
+            "cyberpunk neon circuit board pattern",
+            "ocean waves with tropical sunset",
+            "geometric camouflage in desert tan",
+            "galaxy space theme with nebulae",
+            "carbon fiber texture with blue accents",
+            "retro 80s synthwave gradient",
+            "japanese cherry blossom pattern"
+        ];
+
+        function App() {
+            const [selectedModel, setSelectedModel] = useState(null);
+            const [selectedProvider, setSelectedProvider] = useState('pollinations');
+            const [apiKeys, setApiKeys] = useState({});
+            const [activeTab, setActiveTab] = useState('ai');
+            const [uploadedImage, setUploadedImage] = useState(null);
+            const [template, setTemplate] = useState(null);
+            const [processedImage, setProcessedImage] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [status, setStatus] = useState(null);
+            const [scale, setScale] = useState(1);
+            const [offsetX, setOffsetX] = useState(0);
+            const [offsetY, setOffsetY] = useState(0);
+            const [fileSize, setFileSize] = useState(0);
+            const [aiPrompt, setAiPrompt] = useState('');
+            const [generatedImage, setGeneratedImage] = useState(null);
+            
+            const fileInputRef = useRef(null);
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                if (selectedModel) {
+                    loadTemplate(TESLA_MODELS[selectedModel].templateUrl);
+                }
+            }, [selectedModel]);
+
+            useEffect(() => {
+                const sourceImage = activeTab === 'ai' ? generatedImage : uploadedImage;
+                if (sourceImage && template && selectedModel) {
+                    processImage(sourceImage);
+                }
+            }, [uploadedImage, generatedImage, template, scale, offsetX, offsetY, activeTab]);
+
+            const loadTemplate = async (url) => {
+                try {
+                    setLoading(true);
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        setTemplate(img);
+                        setLoading(false);
+                        setStatus({ type: 'success', message: 'Template loaded successfully!' });
+                    };
+                    img.onerror = () => {
+                        setLoading(false);
+                        setStatus({ type: 'error', message: 'Failed to load template. Using fallback dimensions.' });
+                        const canvas = document.createElement('canvas');
+                        const model = TESLA_MODELS[selectedModel];
+                        canvas.width = model.dimensions.width;
+                        canvas.height = model.dimensions.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        const fallbackImg = new Image();
+                        fallbackImg.src = canvas.toDataURL();
+                        fallbackImg.onload = () => setTemplate(fallbackImg);
+                    };
+                    img.src = url;
+                } catch (error) {
+                    setLoading(false);
+                    setStatus({ type: 'error', message: 'Error loading template: ' + error.message });
+                }
+            };
+
+            const detectPromptType = (prompt) => {
+                const lowerPrompt = prompt.toLowerCase();
+                const characterIndicators = ['mcqueen', 'lightning', 'iron man', 'batman', 'spiderman', 'superman', 'pokemon', 'pikachu', 'mario', 'sonic', 'from the movie', 'from the show', 'character', 'superhero'];
+                const isCharacter = characterIndicators.some(indicator => lowerPrompt.includes(indicator));
+                const patternIndicators = ['pattern', 'geometric', 'stripes', 'dots', 'lines', 'texture', 'seamless', 'repeating', 'tile', 'grid', 'hexagon', 'triangle'];
+                const isPattern = patternIndicators.some(indicator => lowerPrompt.includes(indicator));
+                
+                if (isCharacter) return 'character';
+                if (isPattern) return 'pattern';
+                return 'abstract';
+            };
+
+            const buildEnhancedPrompt = (prompt) => {
+                const promptType = detectPromptType(prompt);
+                
+                if (promptType === 'character') {
+                    return `Racing livery and paint scheme design inspired by ${prompt}. Extract the iconic colors, logos, numbers, symbols, and branding elements. Flat graphic design layout with bold graphics distributed across panels - central logo on main panel, signature symbols on side panels, accent designs on smaller panels. Race car paint job style. Top-down flat view. NO actual car, NO vehicle shape, NO wheels - only the graphic design elements as if painted on flat surface. Like a professional race car livery template.`;
+                } else if (promptType === 'pattern') {
+                    return `Seamless repeating pattern: ${prompt}. Tileable texture design, bold and vibrant colors. Symmetrical layout suitable for wrapping on surfaces. NO cars, NO vehicles, NO automobile shapes. Pure pattern or texture only, like fabric or wallpaper design.`;
+                } else {
+                    return `Bold graphic design layout: ${prompt}. Eye-catching design with strong visual impact, distributed across a flat rectangular canvas. Central focal point with complementary side elements. Suitable for large surface application. NO cars, NO vehicles, NO automobile imagery. Professional graphic design style, like a poster or banner layout.`;
+                }
+            };
+
+            const generateWithPollinations = async (enhancedPrompt) => {
+                const encodedPrompt = encodeURIComponent(enhancedPrompt);
+                const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${Date.now()}`;
+
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error('Failed to load image from Pollinations.ai'));
+                    img.src = imageUrl;
+                });
+            };
+
+            const generateWithHuggingFace = async (enhancedPrompt) => {
+                const apiKey = apiKeys.huggingface;
+                if (!apiKey) {
+                    throw new Error('Hugging Face API key required');
+                }
+
+                // Note: Hugging Face API has CORS restrictions for browser use
+                // This will only work if:
+                // 1. You're using a backend proxy, OR
+                // 2. You deploy this app to a hosting service with a backend
+                // For local/browser-only use, stick with Pollinations.ai
+                
+                try {
+                    const response = await fetch(
+                        "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+                        {
+                            headers: {
+                                Authorization: `Bearer ${apiKey}`,
+                                "Content-Type": "application/json"
+                            },
+                            method: "POST",
+                            body: JSON.stringify({
+                                inputs: enhancedPrompt,
+                                parameters: {
+                                    width: 1024,
+                                    height: 1024
+                                }
+                            }),
+                        }
+                    );
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`);
+                    }
+
+                    const blob = await response.blob();
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = () => reject(new Error('Failed to load generated image'));
+                        img.src = URL.createObjectURL(blob);
+                    });
+                } catch (error) {
+                    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+                        throw new Error('Hugging Face requires a backend server due to CORS restrictions. Please use Pollinations.ai for browser-only mode, or deploy with the backend version.');
+                    }
+                    throw error;
+                }
+            };
+
+            const generateWithReplicate = async (enhancedPrompt) => {
+                const apiKey = apiKeys.replicate;
+                if (!apiKey) {
+                    throw new Error('Replicate API key required');
+                }
+
+                // Note: Replicate requires two API calls (start + poll)
+                // This is a simplified version - you'd need to poll for completion
+                throw new Error('Replicate integration requires backend polling - use backend version for this provider');
+            };
+
+            const generateWithOpenAI = async (enhancedPrompt) => {
+                const apiKey = apiKeys.openai;
+                if (!apiKey) {
+                    throw new Error('OpenAI API key required');
+                }
+
+                const response = await fetch('https://api.openai.com/v1/images/generations', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: "dall-e-3",
+                        prompt: enhancedPrompt,
+                        n: 1,
+                        size: "1024x1024",
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`OpenAI API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const imageUrl = data.data[0].url;
+
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error('Failed to load generated image'));
+                    img.src = imageUrl;
+                });
+            };
+
+            const handleGenerateWrap = async () => {
+                if (!aiPrompt.trim()) {
+                    setStatus({ type: 'error', message: 'Please enter a description for your wrap design!' });
+                    return;
+                }
+
+                if (!selectedModel) {
+                    setStatus({ type: 'error', message: 'Please select a Tesla model first!' });
+                    return;
+                }
+
+                const provider = AI_PROVIDERS[selectedProvider];
+                if (provider.requiresApiKey && !apiKeys[selectedProvider]) {
+                    setStatus({ type: 'error', message: `Please enter your ${provider.name} API key!` });
+                    return;
+                }
+
+                try {
+                    setIsGenerating(true);
+                    setStatus({ type: 'info', message: `Generating with ${provider.name}... This may take 10-30 seconds.` });
+
+                    const enhancedPrompt = buildEnhancedPrompt(aiPrompt);
+                    let img;
+
+                    switch (selectedProvider) {
+                        case 'pollinations':
+                            img = await generateWithPollinations(enhancedPrompt);
+                            break;
+                        case 'huggingface':
+                            img = await generateWithHuggingFace(enhancedPrompt);
+                            break;
+                        case 'replicate':
+                            img = await generateWithReplicate(enhancedPrompt);
+                            break;
+                        case 'openai':
+                            img = await generateWithOpenAI(enhancedPrompt);
+                            break;
+                        default:
+                            throw new Error('Unknown provider');
+                    }
+
+                    setGeneratedImage(img);
+                    setActiveTab('ai');
+                    const model = TESLA_MODELS[selectedModel];
+                    const scaleX = model.dimensions.width / img.width;
+                    const scaleY = model.dimensions.height / img.height;
+                    setScale(Math.max(scaleX, scaleY));
+                    setOffsetX(0);
+                    setOffsetY(0);
+                    setIsGenerating(false);
+                    setStatus({ type: 'success', message: 'AI wrap generated successfully! Adjust and download below.' });
+
+                } catch (error) {
+                    setIsGenerating(false);
+                    setStatus({ type: 'error', message: error.message });
+                    console.error('Generation error:', error);
+                }
+            };
+
+            const handleFileSelect = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    loadImageFile(file);
+                }
+            };
+
+            const loadImageFile = (file) => {
+                if (!file.type.match('image.*')) {
+                    setStatus({ type: 'error', message: 'Please upload an image file (JPG, PNG, WEBP, etc.)' });
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        setUploadedImage(img);
+                        setActiveTab('upload');
+                        const model = TESLA_MODELS[selectedModel];
+                        const scaleX = model.dimensions.width / img.width;
+                        const scaleY = model.dimensions.height / img.height;
+                        setScale(Math.max(scaleX, scaleY));
+                        setOffsetX(0);
+                        setOffsetY(0);
+                        setStatus({ type: 'success', message: 'Image uploaded successfully!' });
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    loadImageFile(file);
+                }
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            };
+
+            const processImage = async (sourceImage) => {
+                if (!sourceImage || !template || !selectedModel) return;
+
+                try {
+                    const model = TESLA_MODELS[selectedModel];
+                    const canvas = canvasRef.current;
+                    canvas.width = model.dimensions.width;
+                    canvas.height = model.dimensions.height;
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    const scaledWidth = sourceImage.width * scale;
+                    const scaledHeight = sourceImage.height * scale;
+                    const x = (canvas.width - scaledWidth) / 2 + offsetX;
+                    const y = (canvas.height - scaledHeight) / 2 + offsetY;
+
+                    ctx.drawImage(sourceImage, x, y, scaledWidth, scaledHeight);
+                    ctx.globalCompositeOperation = 'destination-in';
+                    ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
+                    ctx.globalCompositeOperation = 'source-over';
+
+                    canvas.toBlob(async (blob) => {
+                        const sizeInMB = blob.size / (1024 * 1024);
+                        setFileSize(blob.size);
+                        
+                        if (sizeInMB > 1) {
+                            const compressed = await compressImage(canvas, 0.85);
+                            setProcessedImage(compressed);
+                            const compressedSize = await getImageSize(compressed);
+                            setFileSize(compressedSize);
+                            
+                            if (compressedSize / (1024 * 1024) > 1) {
+                                setStatus({ type: 'error', message: 'Image still exceeds 1MB after compression. Try a simpler design or adjust settings.' });
+                            } else {
+                                setStatus({ type: 'success', message: 'Image compressed to meet 1MB requirement!' });
+                            }
+                        } else {
+                            setProcessedImage(canvas.toDataURL('image/png'));
+                            setStatus({ type: 'success', message: 'Wrap created successfully!' });
+                        }
+                    }, 'image/png');
+                } catch (error) {
+                    setStatus({ type: 'error', message: 'Error processing image: ' + error.message });
+                }
+            };
+
+            const compressImage = (canvas, quality) => {
+                return new Promise((resolve) => {
+                    canvas.toBlob((blob) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(blob);
+                    }, 'image/png', quality);
+                });
+            };
+
+            const getImageSize = (dataUrl) => {
+                return new Promise((resolve) => {
+                    fetch(dataUrl)
+                        .then(res => res.blob())
+                        .then(blob => resolve(blob.size));
+                });
+            };
+
+            const handleDownload = () => {
+                if (!processedImage) return;
+
+                const link = document.createElement('a');
+                const modelName = selectedModel.replace(/-/g, '_');
+                const source = activeTab === 'ai' ? 'ai' : 'custom';
+                const provider = selectedProvider;
+                link.download = `tesla_wrap_${modelName}_${source}_${provider}.png`;
+                link.href = processedImage;
+                link.click();
+                
+                setStatus({ type: 'success', message: 'Wrap downloaded! Load it to your Tesla via USB drive.' });
+            };
+
+            const handleReset = () => {
+                setSelectedModel(null);
+                setUploadedImage(null);
+                setGeneratedImage(null);
+                setTemplate(null);
+                setProcessedImage(null);
+                setScale(1);
+                setOffsetX(0);
+                setOffsetY(0);
+                setFileSize(0);
+                setStatus(null);
+                setAiPrompt('');
+                setActiveTab('ai');
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            };
+
+            const handleSuggestionClick = (suggestion) => {
+                setAiPrompt(suggestion);
+            };
+
+            const handleApiKeyChange = (provider, value) => {
+                setApiKeys(prev => ({
+                    ...prev,
+                    [provider]: value
+                }));
+            };
+
+            const formatFileSize = (bytes) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            };
+
+            const getSizeClass = () => {
+                const sizeInMB = fileSize / (1024 * 1024);
+                if (sizeInMB > 1) return 'file-size-error';
+                if (sizeInMB > 0.8) return 'file-size-warning';
+                return '';
+            };
+
+            const getCharCountClass = () => {
+                return aiPrompt.length > 450 ? 'warning' : '';
+            };
+
+            return (
+                <div className="container">
+                    <header>
+                        <h1>
+                            Tesla Wrap Creator
+                            <span className="ai-badge">Multi-AI</span>
+                        </h1>
+                        <p className="subtitle">Choose Your AI Provider</p>
+                    </header>
+
+                    {/* AI Provider Selection */}
+                    <div className="card">
+                        <h2 className="card-title">Step 1: Select AI Provider</h2>
+                        <div className="provider-selector">
+                            {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
+                                <div
+                                    key={key}
+                                    className={`provider-option ${selectedProvider === key ? 'selected' : ''}`}
+                                    onClick={() => setSelectedProvider(key)}
+                                >
+                                    <div className="provider-name">{provider.name}</div>
+                                    <div className="provider-info">Quality: {provider.quality}</div>
+                                    <div className="provider-info">Speed: {provider.speed}</div>
+                                    <div className="provider-info">{provider.info}</div>
+                                    <span className={`provider-badge badge-${provider.badge}`}>
+                                        {provider.badge}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {AI_PROVIDERS[selectedProvider].requiresApiKey && (
+                            <div className="api-key-section">
+                                <label className="control-label">
+                                    {AI_PROVIDERS[selectedProvider].name} API Key
+                                </label>
+                                <input
+                                    type="password"
+                                    className="api-key-input"
+                                    placeholder="Enter your API key..."
+                                    value={apiKeys[selectedProvider] || ''}
+                                    onChange={(e) => handleApiKeyChange(selectedProvider, e.target.value)}
+                                />
+                                <div className="api-key-help">
+                                    Get your free API key: <a href={AI_PROVIDERS[selectedProvider].apiKeyLink} target="_blank" rel="noopener noreferrer">
+                                        {AI_PROVIDERS[selectedProvider].name} Dashboard
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Model Selection */}
+                    <div className="card">
+                        <h2 className="card-title">Step 2: Select Your Tesla Model</h2>
+                        <div className="model-grid">
+                            {Object.entries(TESLA_MODELS).map(([key, model]) => (
+                                <div
+                                    key={key}
+                                    className={`model-option ${selectedModel === key ? 'selected' : ''}`}
+                                    onClick={() => setSelectedModel(key)}
+                                >
+                                    <div className="model-name">{model.name}</div>
+                                    <div className="model-info">{model.info}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Image Input Options */}
+                    {selectedModel && (
+                        <div className="card">
+                            <h2 className="card-title">Step 3: Get Your Design</h2>
+                            
+                            <div className="input-tabs">
+                                <button 
+                                    className={`tab ${activeTab === 'ai' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('ai')}
+                                >
+                                    ✨ Generate with AI
+                                </button>
+                                <button 
+                                    className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('upload')}
+                                >
+                                    📁 Upload Image
+                                </button>
+                            </div>
+
+                            {/* AI Generation Tab */}
+                            <div className={`tab-content ${activeTab === 'ai' ? 'active' : ''}`}>
+                                <div className="ai-prompt-container">
+                                    <textarea
+                                        className="ai-textarea"
+                                        placeholder="Describe your custom wrap design... (e.g., 'Lightning McQueen from Cars' or 'cyberpunk neon pattern')"
+                                        value={aiPrompt}
+                                        onChange={(e) => setAiPrompt(e.target.value)}
+                                        maxLength={500}
+                                        disabled={isGenerating}
+                                    />
+                                    <div className={`char-counter ${getCharCountClass()}`}>
+                                        {aiPrompt.length} / 500 characters
+                                    </div>
+                                </div>
+
+                                <button
+                                    className="button button-ai"
+                                    onClick={handleGenerateWrap}
+                                    disabled={isGenerating || !aiPrompt.trim()}
+                                >
+                                    <span>
+                                        {isGenerating ? '⚡ Generating...' : `✨ Generate with ${AI_PROVIDERS[selectedProvider].name}`}
+                                    </span>
+                                </button>
+
+                                {isGenerating && (
+                                    <div className="loading-container">
+                                        <div className="spinner"></div>
+                                        <div className="loading-text">Creating your custom wrap with {AI_PROVIDERS[selectedProvider].name}...</div>
+                                        <div className="loading-subtext">This usually takes 10-30 seconds</div>
+                                    </div>
+                                )}
+
+                                <div className="prompt-suggestions">
+                                    <h4>💡 Need Inspiration? Try These:</h4>
+                                    <div className="suggestion-tags">
+                                        {PROMPT_SUGGESTIONS.map((suggestion, index) => (
+                                            <div
+                                                key={index}
+                                                className="suggestion-tag"
+                                                onClick={() => handleSuggestionClick(suggestion)}
+                                            >
+                                                {suggestion}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Upload Tab */}
+                            <div className={`tab-content ${activeTab === 'upload' ? 'active' : ''}`}>
+                                <div
+                                    className="upload-zone"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    onDrop={handleDrop}
+                                    onDragOver={handleDragOver}
+                                >
+                                    <div className="upload-icon">📁</div>
+                                    <div className="upload-text">
+                                        {uploadedImage ? 'Image Loaded! Click to change' : 'Click to upload or drag and drop'}
+                                    </div>
+                                    <div className="upload-subtext">
+                                        Supports JPG, PNG, WEBP and other image formats
+                                    </div>
+                                </div>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileSelect}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Image Adjustment Controls */}
+                    {((uploadedImage && activeTab === 'upload') || (generatedImage && activeTab === 'ai')) && template && (
+                        <div className="card">
+                            <h2 className="card-title">Step 4: Adjust Your Design</h2>
+                            <div className="controls">
+                                <div className="control-group">
+                                    <label className="control-label">Scale</label>
+                                    <input
+                                        type="range"
+                                        min="0.1"
+                                        max="3"
+                                        step="0.01"
+                                        value={scale}
+                                        onChange={(e) => setScale(parseFloat(e.target.value))}
+                                    />
+                                </div>
+                                <div className="control-group">
+                                    <label className="control-label">Horizontal Position</label>
+                                    <input
+                                        type="range"
+                                        min="-500"
+                                        max="500"
+                                        step="1"
+                                        value={offsetX}
+                                        onChange={(e) => setOffsetX(parseInt(e.target.value))}
+                                    />
+                                </div>
+                                <div className="control-group">
+                                    <label className="control-label">Vertical Position</label>
+                                    <input
+                                        type="range"
+                                        min="-500"
+                                        max="500"
+                                        step="1"
+                                        value={offsetY}
+                                        onChange={(e) => setOffsetY(parseInt(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Preview */}
+                    {processedImage && (
+                        <div className="card">
+                            <h2 className="card-title">Step 5: Preview & Download</h2>
+                            <div className="preview-container">
+                                <div className="preview-box">
+                                    <h3>Your Custom Wrap</h3>
+                                    <img src={processedImage} alt="Processed wrap" className="preview-image" />
+                                </div>
+                            </div>
+
+                            {fileSize > 0 && (
+                                <div className="file-info">
+                                    <div className="file-info-item">
+                                        <span className="file-info-label">Dimensions</span>
+                                        <span className="file-info-value">
+                                            {TESLA_MODELS[selectedModel].dimensions.width} × {TESLA_MODELS[selectedModel].dimensions.height}px
+                                        </span>
+                                    </div>
+                                    <div className="file-info-item">
+                                        <span className="file-info-label">File Size</span>
+                                        <span className={`file-info-value ${getSizeClass()}`}>
+                                            {formatFileSize(fileSize)}
+                                        </span>
+                                    </div>
+                                    <div className="file-info-item">
+                                        <span className="file-info-label">Format</span>
+                                        <span className="file-info-value">PNG</span>
+                                    </div>
+                                    <div className="file-info-item">
+                                        <span className="file-info-label">AI Provider</span>
+                                        <span className="file-info-value">
+                                            {activeTab === 'ai' ? AI_PROVIDERS[selectedProvider].name : '📁 Uploaded'}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="controls">
+                                <button
+                                    className="button button-primary"
+                                    onClick={handleDownload}
+                                    disabled={!processedImage || fileSize / (1024 * 1024) > 1}
+                                >
+                                    <span>⬇ Download Wrap</span>
+                                </button>
+                                <button className="button button-secondary" onClick={handleReset}>
+                                    <span>↻ Start Over</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Status Messages */}
+                    {status && (
+                        <div className={`status-message status-${status.type}`}>
+                            {status.type === 'error' && '⚠'}
+                            {status.type === 'success' && '✓'}
+                            {status.type === 'info' && 'ℹ'}
+                            <span>{status.message}</span>
+                        </div>
+                    )}
+
+                    {/* Loading */}
+                    {loading && <div className="spinner"></div>}
+
+                    {/* Instructions */}
+                    <div className="instructions">
+                        <h3>🚗 How to Apply Your Wrap in Tesla</h3>
+                        <ol>
+                            <li>Format a USB drive as exFAT, FAT32, ext3, or ext4</li>
+                            <li>Create a folder called <strong>Wraps</strong> at the root of the drive</li>
+                            <li>Place your downloaded PNG file(s) in the Wraps folder</li>
+                            <li>Insert the USB drive into your Tesla</li>
+                            <li>Go to <strong>Toybox → Paint Shop → Wraps</strong> tab</li>
+                            <li>Select your custom wrap and enjoy!</li>
+                        </ol>
+                    </div>
+
+                    {/* Hidden canvas for processing */}
+                    <div className="canvas-container">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
