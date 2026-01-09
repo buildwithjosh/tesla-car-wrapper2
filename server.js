@@ -92,8 +92,12 @@ async function generateWithPollinations(prompt) {
 }
 
 async function generateWithHuggingFace(prompt, apiKey) {
+    // Using Hugging Face Inference Providers
+    // FLUX.1-schnell is available through multiple providers
+    // We'll use it through the default provider routing
+    
     const response = await fetch(
-        "https://router.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+        "https://router.huggingface.co/v1/images/generations",
         {
             headers: {
                 Authorization: `Bearer ${apiKey}`,
@@ -101,11 +105,10 @@ async function generateWithHuggingFace(prompt, apiKey) {
             },
             method: "POST",
             body: JSON.stringify({
-                inputs: prompt,
-                parameters: {
-                    width: 1024,
-                    height: 1024
-                }
+                model: "black-forest-labs/FLUX.1-schnell",
+                prompt: prompt,
+                n: 1,
+                size: "1024x1024"
             }),
         }
     );
@@ -115,9 +118,27 @@ async function generateWithHuggingFace(prompt, apiKey) {
         throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`);
     }
 
-    const buffer = await response.buffer();
-    const base64 = buffer.toString('base64');
-    return `data:image/png;base64,${base64}`;
+    const data = await response.json();
+    
+    // The new API returns URLs or base64 data
+    if (data.data && data.data[0]) {
+        const imageData = data.data[0];
+        
+        // If it's a URL, fetch and convert to base64
+        if (imageData.url) {
+            const imageResponse = await fetch(imageData.url);
+            const buffer = await imageResponse.buffer();
+            const base64 = buffer.toString('base64');
+            return `data:image/png;base64,${base64}`;
+        }
+        
+        // If it's already base64
+        if (imageData.b64_json) {
+            return `data:image/png;base64,${imageData.b64_json}`;
+        }
+    }
+    
+    throw new Error('Unexpected response format from Hugging Face API');
 }
 
 async function generateWithOpenAI(prompt, apiKey) {
