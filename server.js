@@ -93,7 +93,7 @@ async function generateWithPollinations(prompt) {
 
 async function generateWithHuggingFace(prompt, apiKey) {
     const response = await fetch(
-        "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+        "https://router.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
         {
             headers: {
                 Authorization: `Bearer ${apiKey}`,
